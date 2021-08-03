@@ -5,19 +5,8 @@
 import xml.etree.ElementTree as ET
 import xlsxwriter
 
-sheetPair = {}
-barItem = {}
-
-listOfBarItem = []
 MenuBarItemPair = {}
 
-ClassNameFieldNoListPair = {}
-listFieldNo = []
-fieldNo = {}
-
-comboboxInfo = {}
-listComboBoxInfo = []
-FieldNoComboBoxListPair = {}
 
 resultPair = {}
 resultList = []
@@ -26,20 +15,21 @@ listWorkSheet = []
 
 sheetName = ''
 className = ''
-
+sheetPair = {}
 listSheetName = []
+listMenuName = []
 listClassName = []
+listFieldNo = []
+listDetailInfo = []
 
-resultDic = {}
-
+result = {}
+resultExcel = xlsxwriter.Workbook('C:/Users/Ruanyueying/PycharmProjects/Result.xlsx')
+worksheet0 = resultExcel.add_worksheet('目录')
 
 def print_hi():
     # Use a breakpoint in the code line below to debug your script.
-    mytree = ET.parse('/Users/chenmeirong/PycharmProjects/pythonProject/venv/FieldInfo.xml')
+    mytree = ET.parse('C:/Users/Ruanyueying/PycharmProjects/FieldInfo.xml')
     myroot = mytree.getroot()
-    result = xlsxwriter.Workbook('/Users/chenmeirong/PycharmProjects/pythonProject/venv/Result.xlsx')
-    worksheet0 = result.add_worksheet('目录')
-
 
     for root in myroot:
         print(root.tag)
@@ -51,12 +41,10 @@ def print_hi():
                     sheetPair['name'] = j.attrib.get('Name')
 
                     sheetName = j.attrib.get('Name')
+
                     listSheetName.append(sheetName)
 
                     # New Current sheet and write in the latter block later
-                    worksheetCurrent = result.add_worksheet(sheetName)
-
-                    listWorkSheet.append(worksheetCurrent)
 
                     #write to Excel
                     row = 0
@@ -74,65 +62,114 @@ def print_hi():
 
                     # BarItem {'menuname': '客户管理', 'id': '120030', 'className': 'AccountPartyInfo', 'name': '客户关系人'}
                     for k in j:
+                        barItem = {}
                         barItem['menuname'] = j.attrib.get('Name')
                         barItem['id'] = k.attrib.get('ID')
+                        barItem['name'] = k.attrib.get('Name')
                         if k.attrib.get('ClassName') == '':
-                            barItem['className'] = 'N/A'
+                            if barItem['name'] == '客户信息':
+                                barItem['className'] = 'AccountInfo'
+                            else:
+                                barItem['className'] = 'N/A'
                         else:
                             barItem['className'] = k.attrib.get('ClassName')
-                        barItem['name'] = k.attrib.get('Name')
 
-                        resultList.append([barItem['id'],barItem['className'],barItem['name']])
+                        print(barItem)
+                        listClassName.append(barItem)
 
-                        resultDic[j.attrib.get('Name')] = barItem
 
-                        #write to excel
-                        row = 0
-                        col = 0
-                        worksheetCurrent.write(0,0,'id')
-                        worksheetCurrent.write(0,1,'ClassName')
-                        worksheetCurrent.write(0,2,'name')
+                        # #write to excel
+                        # row = 0
+                        # col = 0
+                        # worksheetCurrent.write(0,0,'id')
+                        # worksheetCurrent.write(0,1,'ClassName')
+                        # worksheetCurrent.write(0,2,'name')
+                        #
+                        # for list in resultList:
+                        #     #print(list)
+                        #     worksheetCurrent.write(row+1,col,list[col])
+                        #     worksheetCurrent.write(row + 1, col+1, list[col+1])
+                        #     worksheetCurrent.write(row + 1, col+2, list[col+2])
+                        #     row+=1
 
-                        for list in resultList:
-                            #print(list)
-                            worksheetCurrent.write(row+1,col,list[col])
-                            worksheetCurrent.write(row + 1, col+1, list[col+1])
-                            worksheetCurrent.write(row + 1, col+2, list[col+2])
-                            row+=1
-
-                        listOfBarItem.append(barItem)
         if root.tag == 'Class':
             for j in root:
                 if j.tag == 'ClassName':
                     for k in j:
                         #'className': 'HisMatch', 'name': 'CallOrPutFlag', 'fieldNo': 'CallOrPutFlag', 'chName': '看涨看跌', 'detailInfo': 'CommonCombobox'
+                        fieldNo = {}
                         fieldNo['className'] = j.attrib.get('Name')
                         fieldNo['name'] = k.attrib.get('Name')
                         fieldNo['fieldNo'] = k.attrib.get('FieldName')
                         fieldNo['chName'] = k.attrib.get('ChName')
                         fieldNo['detailInfo'] = k.attrib.get('DetailInfo')
-                        #print(fieldNo)
-                        listClassName.append(j.attrib.get('Name'))
+                        listFieldNo.append(fieldNo)
+
         if root.tag == 'ComboBoxInfo':
             for j in root:
                 if j.tag == 'FieldNo':
                     for k in j:
+                        comboboxInfo = {}
                         comboboxInfo['fieldNo'] = j.attrib.get('Name')
                         comboboxInfo['enum'] = k.attrib.get('enum')
                         comboboxInfo['description'] = k.attrib.get('description')
+                        listDetailInfo.append(comboboxInfo)
+   # result.close()
+
+def generateResult():
+#ClassName: {'menuname': '基础数据', 'id': '110010', 'className': 'CurrencyGroupInfo', 'name': '币种组信息'}
+# FieldNo: {'className': 'UserTrustDevice', 'name': 'OperateTime', 'fieldNo': 'OperateTime', 'chName': '操作时间', 'detailInfo': 'OperateTime'}
+#comboboxInfo：{'fieldNo': 'ImportFileDesc', 'enum': 'TD', 'description': '1. TD文件，文件名中包含关键字TD，扩展名为.txt，BIG5编码'}
+    for sheetName in listSheetName:
+        listTemp = []
+        for className in listClassName:
+            if className['menuname'] == sheetName:
+                for fieldNo in listFieldNo:
+                    if fieldNo['className'] == className['className']: #and fieldNo['detailInfo'] == 'CommonCombobox' :
+                        for comboboxInfo in listDetailInfo:
+                            if fieldNo['fieldNo'] == comboboxInfo['fieldNo']:
+                                dicTemp = {}
+                                dicTemp['id'] = className['id']
+                                dicTemp['className'] = className['className']
+                                dicTemp['name'] = className['name']
+                                dicTemp['fieldNo'] = fieldNo['fieldNo']
+                                dicTemp['chName'] = fieldNo['chName']
+                                dicTemp['enum'] = comboboxInfo['enum']
+                                dicTemp['description'] = comboboxInfo['description']
+                                listTemp.append(dicTemp)
+
+            result[sheetName] = listTemp
+
+def writeResultToExcel():
+    #'id': '110040', 'className': 'CommodityInfo', 'name': '品种信息', 'fieldNo': 'OptionType', 'chName': '期权类型',
+    # 'enum': 'CNY', 'description': '在岸人民币'
+    for key in result.keys():
+        workSheetMenu = resultExcel.add_worksheet(key)
+        # Header
+        workSheetMenu.write(0,0,'id')
+        workSheetMenu.write(0,1,'className')
+        workSheetMenu.write(0,2,'name')
+        workSheetMenu.write(0,3,'fieldNo')
+        workSheetMenu.write(0,4,'chName')
+        workSheetMenu.write(0,5,'enum')
+        workSheetMenu.write(0,6,'description')
+        row = 1
+        for list in result[key]:
+            workSheetMenu.write(row, 0, list['id'])
+            workSheetMenu.write(row, 1, list['className'])
+            workSheetMenu.write(row, 2, list['name'])
+            workSheetMenu.write(row, 3, list['fieldNo'])
+            workSheetMenu.write(row, 4, list['chName'])
+            workSheetMenu.write(row, 5, list['enum'])
+            workSheetMenu.write(row, 6, list['description'])
+            row += 1
 
 
 
-                        #print(comboboxInfo)
-
-    print(fieldNo)
-
-    result.close()
-
-
-     #   print(i.tag)
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
    print_hi()
+   generateResult()
+   writeResultToExcel()
+   resultExcel.close()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
